@@ -1,0 +1,171 @@
+create database project;
+use project;
+
+create table students (
+    student_id int primary key ,
+    name varchar(100),
+    email varchar(100) unique,
+    batch_year int
+);
+
+create table instructors (
+    instructor_id int primary key ,
+    name varchar(100),
+    email varchar(100) unique,
+    department varchar(100)
+);
+
+create table courses (
+    course_id int primary key ,
+    course_name varchar(100),
+    instructor_id int,
+    foreign key (instructor_id) references instructors(instructor_id)
+);
+
+create table enrollments (
+    enrollment_id int primary key ,
+    student_id int,
+    course_id int,
+    foreign key (student_id) references students(student_id),
+    foreign key (course_id) references courses(course_id)
+);
+
+create table materials (
+    material_id int primary key ,
+    course_id int,
+    title varchar(200),
+    file_link text,
+    foreign key (course_id) references courses(course_id)
+);
+
+create table attendance (
+    attendance_id int primary key ,
+    student_id int,
+    course_id int,
+    attendance_date date,
+    status enum('Present', 'Absent'),
+    foreign key (student_id) references students(student_id),
+    foreign key (course_id) references courses(course_id)
+);
+
+create table performance (
+    performance_id int primary key ,
+    student_id int,
+    course_id int,
+    marks_obtained float,
+    total_marks float,
+    foreign key (student_id) references students(student_id),
+    foreign key (course_id) references courses(course_id)
+);
+
+
+
+
+insert into students (student_id,name, email, batch_year)
+values 
+(1,'Sara Ahmed', 'sara.ahmed@example.com', 2022),
+(2,'Usman Tariq', 'usman.tariq@example.com', 2024),
+(3,'Hina Ali', 'hina.ali@example.com', 2023),
+(4,'Ali Raza', 'ali.raza@example.com', 2023);
+
+insert into instructors (instructor_id,name, email, department)
+values 
+(1,'Prof. Kamran Malik', 'kamran.malik@example.com', 'Information Technology'),
+(2,'Dr. Nadia Sheikh', 'nadia.sheikh@example.com', 'Software Engineering'),
+(3,'Mr. Imran Qureshi', 'imran.qureshi@example.com', 'Computer Science'),
+(4,'Dr. Ayesha Khan', 'ayesha.khan@example.com', 'Computer Science');
+
+insert into courses (course_id,course_name, instructor_id)
+values 
+(1,'Data Structures', 2),
+(2,'Operating Systems', 3),
+(3,'Machine Learning', 4),
+(4,'Database Systems', 1);
+
+
+insert into enrollments (enrollment_id ,student_id, course_id)
+values
+(1,2, 2),
+(2,3, 3),
+(3,4, 4),
+(4,1, 1);
+
+
+insert into materials (material_id,course_id, title, file_link)
+values 
+(1,2, 'Stack and Queue Slides', 'link_to_stack.pdf'),
+(2,3, 'Process Scheduling Notes', 'link_to_os.pdf'),
+(3,4, 'ML Basics PDF', 'link_to_ml.pdf'),
+(4,1, 'Relational Algebra Notes', 'link_to_notes.pdf');
+
+
+insert into attendance (attendance_id,student_id, course_id, attendance_date, status)
+values
+(1,2, 2, '2025-06-16', 'Present'),
+(2,3, 3, '2025-06-17', 'Absent'),
+(3,4, 4, '2025-06-18', 'Present'),
+(4,1, 1, '2025-06-15', 'Present');
+
+
+insert into performance (performance_id,student_id, course_id, marks_obtained, total_marks)
+values 
+(1,2, 2, 78, 100),
+(2,3, 3, 65, 100),
+(3,4, 4, 92, 100),
+(4,1, 1, 85, 100);
+
+-- Joins 
+select s.name as student, c.course_name as course
+from students s
+join enrollments e on s.student_id = e.student_id
+join courses c on e.course_id = c.course_id;
+
+-- Left joins 
+select s.name as student, e.enrollment_id 
+from students s
+left join enrollments e on s.student_id = e.student_id;
+
+-- Right joins 
+select s.name as student, e.enrollment_id 
+from students s
+right join enrollments e on s.student_id = e.student_id;
+
+-- Outer joins 
+select s.name as student, e.enrollment_id 
+from students s
+left join enrollments e on s.student_id = e.student_id
+union
+select s.name as student, e.enrollment_id 
+from students s
+right join enrollments e on s.student_id = e.student_id;
+
+-- Temporary rename
+select i.name as instructor, c.course_name
+from instructors i
+join courses c on i.instructor_id = c.instructor_id;
+
+-- Aggregate function
+select avg(marks_obtained) as avg_marks
+from performance p
+join courses c on p.course_id = c.course_id
+where c.course_name = 'Database Systems';
+
+-- Nested query
+select name from instructors where instructor_id in (select instructor_id from courses);
+
+-- Correlated query
+select s.name
+from students s
+where not exists (
+    select *
+    from attendance a
+    where a.course_id = 1
+    and a.status = 'Absent'
+    and a.student_id = s.student_id
+);
+
+-- Group by
+select c.course_name, count(e.student_id) as total_enrolled
+from courses c
+left join enrollments e on c.course_id = e.course_id
+group by c.course_id;
